@@ -1,87 +1,262 @@
-<!DOCTYPE html>
-<html>
+<!doctype html>
+<html lang="pt-br">
 <head>
-  <meta charset="UTF-8">
-  <title>Market Data Platform Report</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Market Data Platform — Crypto Analytics Report</title>
   <style>
-    body { font-family: Arial, sans-serif; margin: 40px; background-color: #f4f6f8; }
-    h1, h2 { color: #222; }
-    .card { background: #fff; padding: 18px; border: 1px solid #ddd; margin-bottom: 18px; }
-    table { border-collapse: collapse; width: 100%; margin-bottom: 24px; background: white; }
-    th, td { border: 1px solid #ddd; padding: 8px; text-align: right; }
-    th { background-color: #222; color: white; }
-    td:first-child, th:first-child { text-align: left; }
-    img { max-width: 100%; border: 1px solid #ccc; padding: 10px; background-color: white; }
-    .footer { margin-top: 40px; font-size: 12px; color: #666; }
-    ul { margin: 0; padding-left: 18px; }
-    li { margin: 6px 0; }
-    code { background: #eee; padding: 2px 6px; border-radius: 4px; }
+    :root {
+      --bg: #0b0f1a;
+      --card: #11182a;
+      --text: #e7ecff;
+      --muted: #a8b3cf;
+      --border: rgba(255,255,255,.10);
+      --accent: #7aa2ff;
+    }
+    body {
+      margin: 0; padding: 24px;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+      line-height: 1.4;
+    }
+    .container { max-width: 1100px; margin: 0 auto; }
+    header {
+      display:flex; justify-content:space-between; align-items:flex-end; gap:16px;
+      margin-bottom: 18px;
+    }
+    .title { margin:0; font-size: 28px; letter-spacing: .2px; }
+    .subtitle { margin:6px 0 0 0; color: var(--muted); }
+    .meta { color: var(--muted); font-size: 12px; text-align:right; }
+    .grid {
+      display:grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 16px;
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 16px;
+    }
+    h2 { margin: 0 0 10px 0; font-size: 18px; }
+    h3 { margin: 0 0 8px 0; font-size: 14px; color: var(--muted); font-weight: 600; }
+    .span-6 { grid-column: span 6; }
+    .span-12 { grid-column: span 12; }
+    .kpi {
+      display:flex; flex-direction:column; gap:4px;
+      padding: 12px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,.02);
+    }
+    .kpi .label { color: var(--muted); font-size: 12px; }
+    .kpi .value { font-size: 16px; font-weight: 700; }
+    .insights ul { margin: 8px 0 0 18px; color: var(--text); }
+    .insights li { margin: 6px 0; }
+    .muted { color: var(--muted); }
+
+    /* tables */
+    table { width:100%; border-collapse: collapse; margin-top: 10px; font-size: 12px; }
+    th, td { padding: 8px 10px; border-bottom: 1px solid var(--border); }
+    th { text-align:left; color: var(--muted); font-weight: 600; }
+    td { color: var(--text); }
+    tr:hover td { background: rgba(255,255,255,.03); }
+
+    /* images */
+    .imgwrap { margin-top: 10px; }
+    img {
+      width: 100%;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,.02);
+    }
+    footer { margin-top: 18px; color: var(--muted); font-size: 12px; }
+    code { background: rgba(255,255,255,.06); padding: 2px 6px; border-radius: 8px; }
+
+    @media (max-width: 900px){
+      .span-6 { grid-column: span 12; }
+      header { flex-direction: column; align-items:flex-start; }
+      .meta { text-align:left; }
+    }
   </style>
 </head>
+
 <body>
+<div class="container">
+  <header>
+    <div>
+      <h1 class="title">Market Data Platform — Crypto Analytics Report</h1>
+      <p class="subtitle">Top 20 (non-stablecoins) • Returns, Risk & Correlation • Automated ETL</p>
+    </div>
+    <div class="meta">
+      <div>Generated: <strong>{{ generated_at }}</strong></div>
+      <div class="muted">Source: CoinGecko • Engineered by Rafael Ribas</div>
+    </div>
+  </header>
 
-  <h1>Market Data Platform — Crypto Analytics Report</h1>
-  <p>Generated at: {{ generated_at }}</p>
+  <!-- INSIGHTS -->
+  <section class="grid">
+    <div class="card span-12 insights">
+      <h2>Automatic Insights</h2>
 
-  <div class="card">
-    <h2>Automatic Insights</h2>
-    <ul>
-      <li><b>Top 5 cumulative returns (30d):</b>
-        {% for x in insights.top_returns %}
-          <code>{{ x.symbol }}</code> ({{ (x.value * 100) | round(2) }}%)
-          {% if not loop.last %}, {% endif %}
-        {% endfor %}
-      </li>
+      <div class="grid" style="margin-top: 10px;">
+        <div class="kpi span-6">
+          <div class="label">Top 5 cumulative returns (30d)</div>
+          <div class="value">
+            {% if insights and insights.top_returns %}
+              {% for x in insights.top_returns %}
+                {{ x.symbol }} ({{ "%.2f"|format(x.value*100) }}%){{ ", " if not loop.last else "" }}
+              {% endfor %}
+            {% else %}
+              <span class="muted">N/A</span>
+            {% endif %}
+          </div>
+        </div>
 
-      <li><b>Bottom 5 cumulative returns (30d):</b>
-        {% for x in insights.bottom_returns %}
-          <code>{{ x.symbol }}</code> ({{ (x.value * 100) | round(2) }}%)
-          {% if not loop.last %}, {% endif %}
-        {% endfor %}
-      </li>
+        <div class="kpi span-6">
+          <div class="label">Bottom 5 cumulative returns (30d)</div>
+          <div class="value">
+            {% if insights and insights.bottom_returns %}
+              {% for x in insights.bottom_returns %}
+                {{ x.symbol }} ({{ "%.2f"|format(x.value*100) }}%){{ ", " if not loop.last else "" }}
+              {% endfor %}
+            {% else %}
+              <span class="muted">N/A</span>
+            {% endif %}
+          </div>
+        </div>
 
-      <li><b>Top 5 volatility (30d):</b>
-        {% for x in insights.top_vol %}
-          <code>{{ x.symbol }}</code> ({{ (x.value * 100) | round(2) }}%)
-          {% if not loop.last %}, {% endif %}
-        {% endfor %}
-      </li>
+        <div class="kpi span-6">
+          <div class="label">Top 5 volatility (30d)</div>
+          <div class="value">
+            {% if insights and insights.top_vol %}
+              {% for x in insights.top_vol %}
+                {{ x.symbol }} ({{ "%.2f"|format(x.value*100) }}%){{ ", " if not loop.last else "" }}
+              {% endfor %}
+            {% else %}
+              <span class="muted">N/A</span>
+            {% endif %}
+          </div>
+        </div>
 
-      <li><b>Most correlated daily-return pairs:</b>
-        {% for p in insights.top_corr %}
-          <code>{{ p.a }}–{{ p.b }}</code> ({{ p.value | round(2) }})
-          {% if not loop.last %}, {% endif %}
-        {% endfor %}
-      </li>
+        <div class="kpi span-6">
+          <div class="label">Outlier (lowest avg correlation)</div>
+          <div class="value">
+            {% if insights and insights.outlier %}
+              {{ insights.outlier.symbol }}
+              {% if insights.outlier.avg_corr is not none %}
+                <span class="muted"> (avg corr {{ "%.2f"|format(insights.outlier.avg_corr) }})</span>
+              {% endif %}
+            {% else %}
+              <span class="muted">N/A</span>
+            {% endif %}
+          </div>
+        </div>
+      </div>
 
-      <li><b>Least correlated daily-return pairs:</b>
-        {% for p in insights.low_corr %}
-          <code>{{ p.a }}–{{ p.b }}</code> ({{ p.value | round(2) }})
-          {% if not loop.last %}, {% endif %}
-        {% endfor %}
-      </li>
+      <div class="grid" style="margin-top: 12px;">
+        <div class="card span-6" style="padding:12px;">
+          <h3>Most correlated daily-return pairs</h3>
+          <ul>
+            {% if insights and insights.top_corr %}
+              {% for p in insights.top_corr %}
+                <li>{{ p.a }} — {{ p.b }} <span class="muted">({{ "%.2f"|format(p.value) }})</span></li>
+              {% endfor %}
+            {% else %}
+              <li class="muted">N/A</li>
+            {% endif %}
+          </ul>
+        </div>
 
-      <li><b>Outlier (lowest avg correlation):</b>
-        <code>{{ insights.outlier.symbol }}</code>
-        {% if insights.outlier.avg_corr is not none %}
-          (avg corr {{ insights.outlier.avg_corr | round(2) }})
+        <div class="card span-6" style="padding:12px;">
+          <h3>Least correlated daily-return pairs</h3>
+          <ul>
+            {% if insights and insights.low_corr %}
+              {% for p in insights.low_corr %}
+                <li>{{ p.a }} — {{ p.b }} <span class="muted">({{ "%.2f"|format(p.value) }})</span></li>
+              {% endfor %}
+            {% else %}
+              <li class="muted">N/A</li>
+            {% endif %}
+          </ul>
+        </div>
+      </div>
+
+      <p class="muted" style="margin-top: 10px;">
+        Notes: Returns/volatility are computed from daily prices; correlation uses daily returns.
+      </p>
+    </div>
+  </section>
+
+  <!-- CHARTS -->
+  <section class="grid" style="margin-top: 16px;">
+    <div class="card span-12">
+      <h2>Top 10 Price Performance (Normalized, base=100)</h2>
+      <div class="imgwrap">
+        {% if top10_price_image %}
+          <img src="{{ top10_price_image }}" alt="Top 10 normalized price chart">
+        {% else %}
+          <p class="muted">Missing image: top10_price_image</p>
         {% endif %}
-      </li>
-    </ul>
-  </div>
+      </div>
+    </div>
 
-  <h2>30-Day Cumulative Returns Ranking</h2>
-  {{ returns_table | safe }}
+    <div class="card span-6">
+      <h2>Risk vs Return (30d)</h2>
+      <div class="imgwrap">
+        {% if risk_return_image %}
+          <img src="{{ risk_return_image }}" alt="Risk return scatter plot">
+        {% else %}
+          <p class="muted">Missing image: risk_return_image</p>
+        {% endif %}
+      </div>
+    </div>
 
-  <h2>30-Day Volatility Ranking</h2>
-  {{ volatility_table | safe }}
+    <div class="card span-6">
+      <h2>BTC Drawdown (60d)</h2>
+      <div class="imgwrap">
+        {% if drawdown_btc_image %}
+          <img src="{{ drawdown_btc_image }}" alt="BTC drawdown">
+        {% else %}
+          <p class="muted">Missing image: drawdown_btc_image</p>
+        {% endif %}
+      </div>
+    </div>
 
-  <h2>Correlation Matrix — Daily Returns</h2>
-  <img src="{{ correlation_image }}" alt="Correlation Heatmap">
+    <div class="card span-12">
+      <h2>Correlation Heatmap — Daily Returns</h2>
+      <div class="imgwrap">
+        {% if correlation_image %}
+          <img src="{{ correlation_image }}" alt="Correlation heatmap">
+        {% else %}
+          <p class="muted">Missing image: correlation_image</p>
+        {% endif %}
+      </div>
+    </div>
+  </section>
 
-  <div class="footer">
-    <p>Data Source: CoinGecko API | Engineered by Rafael Ribas</p>
-  </div>
+  <!-- TABLES -->
+  <section class="grid" style="margin-top: 16px;">
+    <div class="card span-6">
+      <h2>Ranking — 30d Returns</h2>
+      {{ returns_table | safe }}
+    </div>
 
+    <div class="card span-6">
+      <h2>Ranking — 30d Volatility</h2>
+      {{ volatility_table | safe }}
+    </div>
+
+    <div class="card span-12">
+      <h2>Top Correlation Pairs</h2>
+      {{ top_corr_pairs_table | safe }}
+    </div>
+  </section>
+
+  <footer>
+    <div>Project: <code>market-data-platform</code> • Python + PostgreSQL + SQLAlchemy + Alembic + Docker</div>
+  </footer>
+</div>
 </body>
 </html>

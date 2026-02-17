@@ -34,9 +34,6 @@ class Price(Base):
         Index("ix_prices_asset_date", "asset_id", "date"),
     )
 
-
-
-
 class ETLRun(Base):
     __tablename__ = "etl_runs"
 
@@ -49,3 +46,19 @@ class ETLRun(Base):
     prices_loaded: Mapped[int] = mapped_column(Integer, nullable=True)
 
     status: Mapped[str] = mapped_column(String(20), nullable=False)
+
+class AssetMetric(Base):
+    __tablename__ = "asset_metrics"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+
+    asset_id: Mapped[int] = mapped_column(ForeignKey("assets.id"))
+    date: Mapped[datetime] = mapped_column(Date, nullable=False)
+
+    daily_return: Mapped[float] = mapped_column(Numeric(18, 8))
+    cumulative_return_30d: Mapped[float] = mapped_column(Numeric(18, 8))
+    volatility_30d: Mapped[float] = mapped_column(Numeric(18, 8))
+
+    __table_args__ = (
+        Index("ix_asset_metrics_asset_date", "asset_id", "date", unique=True),
+    )

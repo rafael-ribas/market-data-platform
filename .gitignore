@@ -10,3 +10,5 @@ data/state/
 # cache / local db
 *.sqlite
 data/
+
+cg_cache.sqlite

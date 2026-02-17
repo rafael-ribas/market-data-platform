@@ -1,17 +1,17 @@
+import re
 import time
 import logging
 from datetime import datetime, timezone
-from typing import Dict, List, Tuple, Optional
-import os
+from typing import List, Tuple, Optional, Set
 import json
 from pathlib import Path
-from typing import Set
 import random
+
 import requests
 import requests_cache
-requests_cache.install_cache("cg_cache", expire_after=3600)  # 1h
 
-
+# HTTP cache (1h) to reduce calls during development
+requests_cache.install_cache("cg_cache", expire_after=3600)
 
 BASE_URL = "https://api.coingecko.com/api/v3"
 
@@ -67,7 +67,18 @@ def _save_cache(path: Path, payload: dict) -> None:
     tmp.replace(path)
 
 
-# --- helpers ---------------------------------------------------------------
+# --- helpers ----------------------------------------------------------------
+
+def _is_valid_symbol(symbol: str) -> bool:
+    """
+    Accept only standard crypto symbols:
+    - Uppercase
+    - 2 to 10 characters
+    - Letters and numbers only
+    (filters out things like FIGR_HELOC)
+    """
+    return bool(re.fullmatch(r"[A-Z0-9]{2,10}", symbol))
+
 
 def _get_json(url: str, params: Optional[dict] = None, timeout: int = 20, retries: int = 6) -> dict:
     """
@@ -89,7 +100,6 @@ def _get_json(url: str, params: Optional[dict] = None, timeout: int = 20, retrie
                 if retry_after is not None and retry_after.isdigit():
                     wait = int(retry_after)
                 else:
-                    # fallback exponential backoff
                     wait = min(60, int((2 ** attempt) + random.random()))
                 logger.warning(f"HTTP 429 (rate limit). Retry {attempt}/{retries} in {wait}s")
                 time.sleep(wait)
@@ -111,12 +121,17 @@ def _get_json(url: str, params: Optional[dict] = None, timeout: int = 20, retrie
 
     raise RuntimeError(f"Failed to GET {url} after {retries} retries. Last error: {last_err}")
 
+
 def _ms_to_utc_date(ms: int) -> str:
     """Convert epoch milliseconds to YYYY-MM-DD (UTC)."""
     dt = datetime.fromtimestamp(ms / 1000, tz=timezone.utc)
     return dt.date().isoformat()
 
+
 def fetch_stablecoin_ids() -> set:
+    """
+    Pulls the 'stablecoins' category to exclude them from the Top-N selection.
+    """
     url = f"{BASE_URL}/coins/markets"
     params = {
         "vs_currency": "usd",
@@ -131,14 +146,20 @@ def fetch_stablecoin_ids() -> set:
     return {coin["id"] for coin in data}
 
 
-# --- public API ------------------------------------------------------------
+# --- public API -------------------------------------------------------------
 
 def fetch_top_assets(limit: int = 20, vs_currency: str = "usd") -> List[dict]:
-    stable_ids = fetch_stablecoin_ids()  # ou sua lógica de stablecoins
+    """
+    Fetch top assets by market cap, excluding:
+      - stablecoins (by category lookup)
+      - irregular symbols (e.g., FIGR_HELOC)
+    Keeps paging until it collects `limit` valid assets.
+    """
+    stable_ids = fetch_stablecoin_ids()
 
-    collected = []
+    collected: List[dict] = []
     page = 1
-    per_page = 100  # pode ser 50/100 (mais seguro p/ rate limit)
+    per_page = 100  # 50/100 (safer w/ rate-limit)
 
     logger.info(f"Fetching top {limit} NON-stable assets (vs={vs_currency})...")
 
@@ -153,31 +174,38 @@ def fetch_top_assets(limit: int = 20, vs_currency: str = "usd") -> List[dict]:
         }
 
         data = _get_json(url, params=params)
-
         if not data:
-            break  # acabou a lista
+            break
 
         for a in data:
-            if a["id"] in stable_ids:
+            if len(collected) >= limit:
+                break
+
+            coin_id = a["id"]
+            symbol = a["symbol"].upper()
+
+            if coin_id in stable_ids:
+                continue
+
+            if not _is_valid_symbol(symbol):
+                logger.info(f"Skipping invalid symbol: {symbol} ({coin_id})")
                 continue
 
             collected.append(
                 {
-                    "id": a["id"],
-                    "symbol": a["symbol"].upper(),
+                    "id": coin_id,
+                    "symbol": symbol,
                     "name": a["name"],
                     "source": "coingecko",
                 }
             )
-
-            if len(collected) >= limit:
-                break
 
         logger.info(f"Page {page}: collected {len(collected)}/{limit}")
         page += 1
 
     logger.info(f"Fetched {len(collected)} NON-stable assets.")
     return collected[:limit]
+
 
 def fetch_market_chart(coin_id: str, days: int = 30, vs_currency: str = "usd") -> dict:
     """
@@ -187,11 +215,7 @@ def fetch_market_chart(coin_id: str, days: int = 30, vs_currency: str = "usd") -
       - total_volumes
     """
     url = f"{BASE_URL}/coins/{coin_id}/market_chart"
-    params = {
-        "vs_currency": vs_currency,
-        "days": days,
-        "interval": "daily",
-    }
+    params = {"vs_currency": vs_currency, "days": days, "interval": "daily"}
     return _get_json(url, params=params)
 
 
@@ -206,7 +230,6 @@ def extract_top_assets_with_history(
     Resume-friendly extraction:
     - Saves each coin's market_chart JSON in data/raw/coingecko/
     - Keeps progress state in data/state/extract_progress.json
-    - On rerun, skips coins already cached/completed
 
     Returns (assets, prices) normalized for loading.
 
@@ -221,19 +244,28 @@ def extract_top_assets_with_history(
     completed: Set[str] = set(state.get("completed_coin_ids", []))
 
     all_prices: List[dict] = []
-    total = len(assets_raw)
 
-    for i, asset in enumerate(assets_raw, start=1):
+    processed = 0
+
+    for asset in assets_raw:
         coin_id = asset["id"]
-        symbol = asset["symbol"]
+        symbol = asset["symbol"]  # already upper
+        name = asset["name"]
+
+        # (double safety) ensure symbol ok
+        if not _is_valid_symbol(symbol):
+            logger.info(f"Skipping invalid symbol at history stage: {symbol} ({coin_id})")
+            continue
+
+        processed += 1
 
         cache_file = _cache_path(coin_id=coin_id, days=days, vs_currency=vs_currency)
 
         if use_cache and cache_file.exists():
-            logger.info(f"[{i}/{total}] Using cache for {symbol} ({coin_id})")
+            logger.info(f"[{processed}/{limit}] Using cache for {symbol} ({coin_id})")
             chart = _load_cache(cache_file)
         else:
-            logger.info(f"[{i}/{total}] Fetching {days}d history for {symbol} ({coin_id})...")
+            logger.info(f"[{processed}/{limit}] Fetching {days}d history for {symbol} ({coin_id})...")
             chart = fetch_market_chart(coin_id=coin_id, days=days, vs_currency=vs_currency)
             if use_cache:
                 _save_cache(cache_file, chart)
@@ -269,13 +301,16 @@ def extract_top_assets_with_history(
             }
             _save_state(state)
 
+        if processed >= limit:
+            break
+
         time.sleep(throttle_seconds)
 
-    assets = [{"symbol": a["symbol"], "name": a["name"], "source": a["source"]} for a in assets_raw]
+    assets_out = [{"symbol": a["symbol"], "name": a["name"], "source": a["source"]} for a in assets_raw]
 
-    logger.info(f"Done. assets={len(assets)} price_rows={len(all_prices)}")
+    logger.info(f"Done. assets={len(assets_out)} price_rows={len(all_prices)}")
     logger.info(f"Progress saved in: {STATE_FILE.as_posix()}")
-    return assets, all_prices
+    return assets_out, all_prices
 
 
 if __name__ == "__main__":

@@ -31,7 +31,7 @@ def run_etl(limit: int, days: int, throttle: float, chunk_prices: int):
     try:
         assets, prices = extract_top_assets_with_history(
             limit=limit,
-            days=days,
+            days=days+15,
             throttle_seconds=throttle,
             use_cache=True,
         )
@@ -46,6 +46,11 @@ def run_etl(limit: int, days: int, throttle: float, chunk_prices: int):
         assets_loaded, prices_loaded = load_assets_and_prices(
             assets, prices, chunk_size_prices=chunk_prices
         )
+
+        from pipeline.transform import compute_metrics
+
+        metrics_count = compute_metrics()
+        logger.info(f"Metrics computed: {metrics_count}")
 
         finished_at = datetime.utcnow()
 

@@ -1,156 +1,223 @@
 # 📊 Market Data Platform
 
-A data engineering project that implements a complete market data pipeline for financial assets.
+![Python](https://img.shields.io/badge/Python-3.9+-blue)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-blue)
+![Docker](https://img.shields.io/badge/Docker-Containerized-blue)
+![SQLAlchemy](https://img.shields.io/badge/SQLAlchemy-ORM-orange)
+![Alembic](https://img.shields.io/badge/Alembic-Migrations-lightgrey)
+![ETL](https://img.shields.io/badge/Architecture-ETL-green)
+![Analytics](https://img.shields.io/badge/Layer-Analytics-purple)
+![Reporting](https://img.shields.io/badge/Output-HTML%20%7C%20PDF-red)
 
-It extracts market data from the CoinGecko API, normalizes and stores it in a PostgreSQL database, computes analytics-ready datasets, and provides a clean structure for further API/reporting layers.
+A production-style **Data Engineering project** that implements a
+complete financial market data pipeline.
 
----
+The system extracts cryptocurrency data from the CoinGecko API, stores
+it in PostgreSQL, computes portfolio analytics (returns, volatility,
+correlation), and automatically generates HTML and PDF research reports.
 
-## 🧱 Architecture Overview
+------------------------------------------------------------------------
 
-This project includes:
+# 📑 Table of Contents
 
-- **Dockerized PostgreSQL** database  
-- **Schema versioning** with Alembic  
-- **Extract-Transform-Load (ETL)** pipeline  
-- **Cache + resume** logic for robust extraction  
-- **Stablecoin filtering**  
-- **Idempotent upsert** with Postgres `ON CONFLICT`  
-- **Execution tracking** in `etl_runs`  
-- **Data Quality checks**  
-- **Modular project structure**
+-   [Architecture Overview](#-architecture-overview)
+-   [Tech Stack](#-tech-stack)
+-   [Data Pipeline Flow](#-data-pipeline-flow)
+-   [Analytics Layer](#-analytics-layer)
+-   [Automated Reporting](#-automated-reporting)
+-   [Business Impact](#-business-impact)
+-   [Quickstart](#-quickstart)
+-   [Project Roadmap](#-project-roadmap)
+-   [Repository Structure](#-repository-structure)
+-   [Author](#-author)
 
----
+------------------------------------------------------------------------
 
-## 📦 Tech Stack
+# 🧱 Architecture Overview
 
-- `Python 3.9+`
-- `PostgreSQL`
-- `SQLAlchemy (Core + ORM)`
-- `Alembic`
-- `Requests (HTTP API)`
-- `Logging & CLI`
-- `Docker & Docker Compose`
+Pipeline structure:
 
----
+`API → Extract → Transform → Load → Analytics → Reporting`
 
-## 🚀 Quickstart
+Core components:
 
-### 1 - Requirements
+-   Dockerized PostgreSQL database
+-   Schema versioning with Alembic
+-   Idempotent upserts (`ON CONFLICT`)
+-   ETL run tracking (`etl_runs`)
+-   Data quality validations
+-   Analytics computation layer
+-   Automated HTML + PDF report generation
 
-Install:
+------------------------------------------------------------------------
 
-- `Python >=3.9`
-- `Docker`
-- `Docker Compose`
-- `Git`
+# 🛠 Tech Stack
 
-Clone the repo:
+-   Python 3.9+
+-   PostgreSQL 16
+-   SQLAlchemy (Core + ORM)
+-   Alembic (Migrations)
+-   Docker & Docker Compose
+-   Pandas / NumPy (Analytics)
+-   Jinja2 (HTML templating)
+-   Matplotlib (Charts)
+-   WeasyPrint (PDF rendering)
 
-```bash
-git clone https://github.com/rafael-ribas/market-data-platform
-cd market-data-platform
-```
+------------------------------------------------------------------------
 
-### 2 - Environment
+# 🔄 Data Pipeline Flow
 
-#### Copy `.env.example`:
+## 1 - Extract
 
-`cp .env.example .env`
+-   Fetch Top N non-stable assets
+-   Historical price data ingestion
+-   Rate limit handling
+-   Resume capability
+-   Local caching
 
-#### Populate .env with:
+## 2️ - Transform
 
-```
-POSTGRES_DB=marketdata
-POSTGRES_USER=marketuser
-POSTGRES_PASSWORD=marketpass
-POSTGRES_PORT=5432
-DATABASE_URL=postgresql+psycopg://marketuser:marketpass@localhost:5432/marketdata
-```
+-   Daily returns
+-   30-day cumulative return
+-   30-day rolling volatility
+-   Correlation matrix
 
-### 3 - Start Database
+## 3️ - Load
 
-`docker compose up -d`
+-   Idempotent upsert into:
+    -   `assets`
+    -   `prices`
+    -   `asset_metrics`
+-   Execution logging in `etl_runs`
 
-### 4 - Apply Migrations
+------------------------------------------------------------------------
 
-`alembic upgrade head`
+# 📊 Analytics Layer
 
-You should see tables:
+The analytics module computes:
 
-`assets`, `prices` and `etl_runs`
+-   📈 30-day performance ranking
+-   ⚖️ 30-day volatility ranking
+-   🔥 Correlation matrix
+-   🎯 Risk vs Return scatter plot
+-   📉 Top 10 asset price charts
 
-### 5 - Run ETL
+All outputs are saved into:
 
-`python -m pipeline.run --limit 20 --days 30`
+    /reports/
 
-This performs:
+------------------------------------------------------------------------
 
-- Extract top assets (excluding stablecoins)
-- Fetch history (last 30 days)
-- Load into database
-- Record run in etl_runs
+# 📑 Automated Reporting
 
-#### 📌 ETL Observability
+Run:
 
-Each run is logged in the database:
+    `python -m pipeline.report`
 
-`SELECT * FROM etl_runs ORDER BY id DESC;`
+Outputs:
 
-Fields include:
+-   `market_report.html`
+-   `market_report.pdf`
 
-| Column        | Description                   |
-| ------------- | ----------------------------- |
-| started_at    | UTC start timestamp           |
-| finished_at   | UTC finish timestamp          |
-| assets_loaded | number of asset rows upserted |
-| prices_loaded | number of price rows upserted |
-| status        | SUCCESS / FAILED              |
+The report includes:
 
+-   Executive summary
+-   Top gainers / losers
+-   Volatility analysis
+-   Correlation heatmap
+-   Risk-return positioning
+-   Automated insights
 
-#### 🧪 Data Quality Checks
+------------------------------------------------------------------------
 
-Before loading, the pipeline verifies:
+# 💼 Business Impact
 
-- Non-empty asset list
-- No null or non-positive prices
+This project simulates a real-world financial data platform and
+demonstrates:
 
-## 📅 Project Roadmap
+### ✅ Production-Grade Data Engineering Practices
 
+-   Containerized infrastructure
+-   Schema migrations
+-   Idempotent data loading
+-   ETL run tracking & observability
 
-| Milestone               | Status |
-| ----------------------- | ------ |
-| Extract historical data | ✅      |
-| Load with upsert        | ✅      |
-| Run tracking & DQ       | ✅      |
-| Metrics & Analytics     | ⚙️     |
-| API Layer (FastAPI)     | 🔜     |
-| Reporting (HTML/PDF)    | 🔜     |
-| Tests & CI/CD           | 🔜     |
+### ✅ Quantitative Analytics Capabilities
 
+-   Risk & return computation
+-   Portfolio diversification analysis
+-   Rolling volatility modeling
+-   Automated insights generation
 
-## 📚 Next Enhancements
+### ✅ End-to-End Ownership
 
-- Extend API layer with FastAPI
-- Compute analytics (returns, volatility, correlation)
-- Generate automated reports
-- Add pytest tests + Github Actions
-- Cloud deployment (e.g., Render / Railway)
+From raw API ingestion to executive-level PDF reporting.
 
-## 🗂 Repository Structure
-```
-market-data-platform/
-├── alembic/
-├── pipeline/
-├── db/
-├── data/
-├── docker-compose.yml
-├── .env.example
-├── requirements.txt
-└── README.md
-```
+This mirrors workflows used in: - Hedge funds - Asset management firms -
+Crypto trading desks - Fintech analytics teams
 
-## 👨‍ Author & Connect
+The system transforms raw market data into decision-ready research
+deliverables.
+
+------------------------------------------------------------------------
+
+# 🚀 Quickstart
+
+### 1 - Clone
+
+    `git clone https://github.com/rafael-ribas/market-data-platform`
+    `cd market-data-platform`
+
+### 2 - Start Database
+
+    `docker compose up -d`
+
+### 3 - Apply Migrations
+
+    `alembic upgrade head`
+
+### 4 - Run ETL
+
+    `python -m pipeline.run --limit 20 --days 45`
+
+### 5 - Generate Report
+
+    `python -m pipeline.report`
+
+------------------------------------------------------------------------
+
+# 📅 Project Roadmap
+  
+| Milestone | Status|
+| ---- | ---- |
+| Historical Extract | ✅ |
+| Idempotent Load | ✅ |
+| ETL Tracking | ✅ |
+| Analytics Engine | ✅ |
+| Automated Reporting | ✅ |
+| FastAPI API Layer | 🔜 |
+| Unit Tests (pytest) | 🔜 |
+| CI/CD | 🔜 |
+| Cloud Deployment | 🔜 |
+
+------------------------------------------------------------------------
+
+# 🗂 Repository Structure
+
+    market-data-platform/
+    │
+    ├── alembic/
+    ├── db/
+    ├── pipeline/
+    ├── templates/
+    ├── reports/
+    ├── docker-compose.yml
+    ├── requirements.txt
+    └── README.md
+
+------------------------------------------------------------------------
+
+# ‍💻 Author
 
 Rafael Ribas
 

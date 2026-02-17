@@ -12,3 +12,6 @@ data/state/
 data/
 
 cg_cache.sqlite
+
+*.png
+*.csv

@@ -2,3 +2,11 @@
 .env
 __pycache__/
 *.pyc
+
+# dados
+data/raw/
+data/state/
+
+# cache / local db
+*.sqlite
+data/

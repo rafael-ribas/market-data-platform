@@ -1,8 +1,8 @@
-from sqlalchemy import String, Integer, Date, Numeric, ForeignKey, UniqueConstraint, Index
+from sqlalchemy import String, Integer, Date, Numeric, ForeignKey, UniqueConstraint, Index, DateTime
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from .base import Base
 from typing import Optional
-
+from datetime import datetime
 
 class Asset(Base):
     __tablename__ = "assets"
@@ -33,3 +33,19 @@ class Price(Base):
         UniqueConstraint("asset_id", "date", name="uq_prices_asset_date"),
         Index("ix_prices_asset_date", "asset_id", "date"),
     )
+
+
+
+
+class ETLRun(Base):
+    __tablename__ = "etl_runs"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+
+    started_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    finished_at: Mapped[datetime] = mapped_column(DateTime, nullable=True)
+
+    assets_loaded: Mapped[int] = mapped_column(Integer, nullable=True)
+    prices_loaded: Mapped[int] = mapped_column(Integer, nullable=True)
+
+    status: Mapped[str] = mapped_column(String(20), nullable=False)

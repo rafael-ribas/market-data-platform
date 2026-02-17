@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Market Data Platform Report</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 40px; background-color: #f4f6f8; }
+    h1, h2 { color: #222; }
+    .card { background: #fff; padding: 18px; border: 1px solid #ddd; margin-bottom: 18px; }
+    table { border-collapse: collapse; width: 100%; margin-bottom: 24px; background: white; }
+    th, td { border: 1px solid #ddd; padding: 8px; text-align: right; }
+    th { background-color: #222; color: white; }
+    td:first-child, th:first-child { text-align: left; }
+    img { max-width: 100%; border: 1px solid #ccc; padding: 10px; background-color: white; }
+    .footer { margin-top: 40px; font-size: 12px; color: #666; }
+    ul { margin: 0; padding-left: 18px; }
+    li { margin: 6px 0; }
+    code { background: #eee; padding: 2px 6px; border-radius: 4px; }
+  </style>
+</head>
+<body>
+
+  <h1>Market Data Platform — Crypto Analytics Report</h1>
+  <p>Generated at: {{ generated_at }}</p>
+
+  <div class="card">
+    <h2>Automatic Insights</h2>
+    <ul>
+      <li><b>Top 5 cumulative returns (30d):</b>
+        {% for x in insights.top_returns %}
+          <code>{{ x.symbol }}</code> ({{ (x.value * 100) | round(2) }}%)
+          {% if not loop.last %}, {% endif %}
+        {% endfor %}
+      </li>
+
+      <li><b>Bottom 5 cumulative returns (30d):</b>
+        {% for x in insights.bottom_returns %}
+          <code>{{ x.symbol }}</code> ({{ (x.value * 100) | round(2) }}%)
+          {% if not loop.last %}, {% endif %}
+        {% endfor %}
+      </li>
+
+      <li><b>Top 5 volatility (30d):</b>
+        {% for x in insights.top_vol %}
+          <code>{{ x.symbol }}</code> ({{ (x.value * 100) | round(2) }}%)
+          {% if not loop.last %}, {% endif %}
+        {% endfor %}
+      </li>
+
+      <li><b>Most correlated daily-return pairs:</b>
+        {% for p in insights.top_corr %}
+          <code>{{ p.a }}–{{ p.b }}</code> ({{ p.value | round(2) }})
+          {% if not loop.last %}, {% endif %}
+        {% endfor %}
+      </li>
+
+      <li><b>Least correlated daily-return pairs:</b>
+        {% for p in insights.low_corr %}
+          <code>{{ p.a }}–{{ p.b }}</code> ({{ p.value | round(2) }})
+          {% if not loop.last %}, {% endif %}
+        {% endfor %}
+      </li>
+
+      <li><b>Outlier (lowest avg correlation):</b>
+        <code>{{ insights.outlier.symbol }}</code>
+        {% if insights.outlier.avg_corr is not none %}
+          (avg corr {{ insights.outlier.avg_corr | round(2) }})
+        {% endif %}
+      </li>
+    </ul>
+  </div>
+
+  <h2>30-Day Cumulative Returns Ranking</h2>
+  {{ returns_table | safe }}
+
+  <h2>30-Day Volatility Ranking</h2>
+  {{ volatility_table | safe }}
+
+  <h2>Correlation Matrix — Daily Returns</h2>
+  <img src="{{ correlation_image }}" alt="Correlation Heatmap">
+
+  <div class="footer">
+    <p>Data Source: CoinGecko API | Engineered by Rafael Ribas</p>
+  </div>
+
+</body>
+</html>

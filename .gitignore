@@ -6,12 +6,10 @@ __pycache__/
 # dados
 data/raw/
 data/state/
+reports/
+*.png
+*.csv
 
 # cache / local db
 *.sqlite
 data/
-
-cg_cache.sqlite
-
-*.png
-*.csv

@@ -1,39 +1,50 @@
-Estrutura de pastas:
+# Market Data Platform
 
-market-data-platform/
-  app/
-  pipeline/
-  db/
-  reports/
-  tests/
-  scripts/
+A production-oriented data engineering project that implements an end-to-end market data pipeline.
 
-
-Checklist:
-
-- venv .venv (Windows)
-- comandos básicos no README (run, test, docker)
----
-
-- arquitetura (diagrama simples)
-- como rodar local (docker + pipeline + api)
-- exemplos de requests (curl)
-- screenshots do report + swagger
-- Plus: badges:
-	- CI passing
-	- Python version
-	- Docker
-	- Postgres
-	- FastAPI
+The platform extracts financial market data from external APIs, transforms and validates it, stores it in PostgreSQL with version-controlled schema migrations (Alembic), and prepares the data for analytics and API exposure.
 
 ---
 
-tabela top assets
+## 🏗 Architecture
 
-performance 7d/30d
+- Python
+- PostgreSQL (Dockerized)
+- SQLAlchemy ORM
+- Alembic (schema versioning)
+- Modular project structure
 
-correlação (top pairs)
+---
 
-gráfico simples (matplotlib)
+## 📦 Current Status
 
-output em reports/output/report.html (PDF opcional)
+- ✅ Dockerized PostgreSQL  
+- ✅ Database schema (assets, prices)  
+- ✅ Alembic migrations  
+- 🔄 ETL pipeline (in progress)  
+- 🔜 API layer (FastAPI)  
+- 🔜 Metrics computation  
+
+---
+
+## 🚀 How to Run
+
+### 1. Start database
+
+`docker compose up -d`
+
+### 2. Apply migrations
+
+`alembic upgrade head`
+
+---
+
+## 🎯 Project Goal
+
+This project is designed to simulate a production-grade data engineering system, demonstrating:
+
+- ETL architecture
+- Relational modeling
+- Migration-based schema management
+- Containerized infrastructure
+- Analytical data preparation

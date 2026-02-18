@@ -29,6 +29,7 @@ correlation), and automatically generates HTML and PDF research reports.
 -   [Automated Reporting](#-automated-reporting)
 -   [Business Impact](#-business-impact)
 -   [Quickstart](#-quickstart)
+-   [Testing](#-testing)
 -   [Roadmap Status](#-roadmap-status)
 -   [Repository Structure](#-repository-structure)
 -   [Author](#-author)
@@ -254,6 +255,79 @@ deliverables.
 ### 7 - Access 
 	
 `http://localhost:8000/docs`
+
+------------------------------------------------------------------------
+
+# 🧪 Testing
+
+This project includes an automated test suite to validate API behavior, database interactions, and business logic.
+
+All tests are written using **pytest** and are designed to ensure:
+
+- Endpoint correctness (status codes, responses, validation)
+- Database schema integrity
+- Query and filtering behavior
+- Metrics and correlation calculations
+
+------------------------------------------------------------------------
+
+## ▶ Running Tests
+
+Activate the virtual environment and run:
+
+`pytest -q`
+
+Expected output: `9 passed in X.XXs`
+
+
+To list available fixtures:
+
+`pytest --fixtures -q`
+
+## 🏗 Test Architecture
+
+Tests are organized under the `tests/` directory and follow an integration-first approach.
+
+### 1️ - API Integration Tests
+
+Most tests use FastAPI’s TestClient to validate endpoints end-to-end:
+
+- `/assets`
+- `/prices/{symbol}`
+- `/metrics/latest`
+- `/correlation`
+
+These tests ensure that routing, dependency injection, database access, and response serialization work together correctly.
+
+### 2️ - Database Fixture
+
+The test suite includes a transactional database fixture:
+
+`db_session`
+
+This fixture:
+
+- Creates a SQLAlchemy session
+- Rolls back changes after each test
+- Ensures test isolation
+- Prevents data leakage between tests
+
+SQLite is configured with:
+
+- `check_same_thread=False`
+- `StaticPool` (for in-memory database)
+
+This guarantees compatibility with FastAPI’s TestClient threading model.
+
+### 🔄 Test Database Strategy
+
+Tests use a dedicated SQLite database (in-memory or test file), ensuring:
+
+- No interference with development data
+- Fast execution
+- Deterministic results
+
+The schema is automatically created at test startup.
 
 ------------------------------------------------------------------------
 

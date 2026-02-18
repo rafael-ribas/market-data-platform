@@ -8,6 +8,7 @@
 ![ETL](https://img.shields.io/badge/Architecture-ETL-green)
 ![Analytics](https://img.shields.io/badge/Layer-Analytics-purple)
 ![Reporting](https://img.shields.io/badge/Output-HTML%20%7C%20PDF-red)
+![FastAPI](https://img.shields.io/badge/FastAPI-API-green)
 
 A production-style **Data Engineering project** that implements a
 complete financial market data pipeline.
@@ -23,11 +24,12 @@ correlation), and automatically generates HTML and PDF research reports.
 -   [Architecture Overview](#-architecture-overview)
 -   [Tech Stack](#-tech-stack)
 -   [Data Pipeline Flow](#-data-pipeline-flow)
+-   [REST API (FastAPI)](#-rest-api-fastapi)
 -   [Analytics Layer](#-analytics-layer)
 -   [Automated Reporting](#-automated-reporting)
 -   [Business Impact](#-business-impact)
 -   [Quickstart](#-quickstart)
--   [Project Roadmap](#-project-roadmap)
+-   [Roadmap Status](#-roadmap-status)
 -   [Repository Structure](#-repository-structure)
 -   [Author](#-author)
 
@@ -92,15 +94,73 @@ Core components:
 
 ------------------------------------------------------------------------
 
+# 🌐 REST API (FastAPI)
+
+Interactive Documentation: `http://localhost:8000/docs`
+
+## 1 - Health
+
+Returns API status.
+
+`GET /health`
+
+## 2 - Assets
+
+Returns available tracked assets.
+
+`GET /assets\`
+`GET /assets/{symbol}`
+
+## 3 - Prices
+
+Returns historical daily prices.
+
+Parameters:
+
+- `start` (optional)
+- `end` (optional)
+- `limit` (default capped)
+
+`GET /prices/{symbol}?start=YYYY-MM-DD&end=YYYY-MM-DD`
+
+## 4 - Metrics
+
+Returns:
+
+- Daily return
+- 30-day cumulative return
+- 30-day rolling volatility
+
+`GET /metrics/latest\`
+`GET /metrics/{symbol}?window=60`
+
+## 5 - Correlation
+
+Returns:
+
+- Pearson correlation of aligned daily returns
+- Number of overlapping observations
+- Start and end dates used
+- Reference date (`as_of`)
+
+`GET /correlation?asset1=BTC&asset2=ETH&window=60`
+
+------------------------------------------------------------------------
+
 # 📊 Analytics Layer
 
 The analytics module computes:
 
--   📈 30-day performance ranking
--   ⚖️ 30-day volatility ranking
--   🔥 Correlation matrix
--   🎯 Risk vs Return scatter plot
--   📉 Top 10 asset price charts
+- 📈 Performance ranking
+- ⚖️ Volatility ranking
+- 🔥 Correlation matrix
+- 🎯 Risk vs Return positioning
+- 📉 Historical price series
+
+These analytics power both:
+
+- REST API responses
+- HTML/PDF automated reports
 
 All outputs are saved into:
 
@@ -153,8 +213,11 @@ demonstrates:
 
 From raw API ingestion to executive-level PDF reporting.
 
-This mirrors workflows used in: - Hedge funds - Asset management firms -
-Crypto trading desks - Fintech analytics teams
+This mirrors workflows used in: 
+- Hedge funds 
+- Asset management firms 
+- Crypto trading desks 
+- Fintech analytics teams
 
 The system transforms raw market data into decision-ready research
 deliverables.
@@ -165,24 +228,32 @@ deliverables.
 
 ### 1 - Clone
 
-    `git clone https://github.com/rafael-ribas/market-data-platform`
-    `cd market-data-platform`
+`git clone https://github.com/rafael-ribas/market-data-platform`
+`cd market-data-platform`
 
 ### 2 - Start Database
 
-    `docker compose up -d`
+`docker compose up -d`
 
 ### 3 - Apply Migrations
 
-    `alembic upgrade head`
+`alembic upgrade head`
 
 ### 4 - Run ETL
 
-    `python -m pipeline.run --limit 20 --days 45`
+`python -m pipeline.run --limit 20 --days 45`
 
 ### 5 - Generate Report
 
-    `python -m pipeline.report`
+`python -m pipeline.report`
+	
+### 6 - Start API Server
+
+`uvicorn app.main:app --reload`
+	
+### 7 - Access 
+	
+`http://localhost:8000/docs`
 
 ------------------------------------------------------------------------
 
@@ -195,9 +266,10 @@ deliverables.
 | ETL Tracking | ✅ |
 | Analytics Engine | ✅ |
 | Automated Reporting | ✅ |
-| FastAPI API Layer | 🔜 |
+| FastAPI API Layer | ✅ |
 | Unit Tests (pytest) | 🔜 |
 | CI/CD | 🔜 |
+| Dockerized API Service | 🔜 |
 | Cloud Deployment | 🔜 |
 
 ------------------------------------------------------------------------
@@ -207,13 +279,14 @@ deliverables.
     market-data-platform/
     │
     ├── alembic/
+	├── app/
     ├── db/
     ├── pipeline/
-    ├── templates/
     ├── reports/
+    ├── templates/
     ├── docker-compose.yml
-    ├── requirements.txt
-    └── README.md
+    ├── README.md
+    └── requirements.txt
 
 ------------------------------------------------------------------------
 

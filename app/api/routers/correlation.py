@@ -5,6 +5,7 @@ Endpoint:
 - GET /correlation?asset1=BTC&asset2=ETH&window=30
 Uses daily returns computed from Price series (pct change) and Pearson correlation.
 """
+
 from datetime import date as Date
 from typing import Iterator, List, Optional, Tuple
 
@@ -30,10 +31,14 @@ def get_db() -> Iterator[Session]:
 class CorrelationOut(BaseModel):
     asset1: str
     asset2: str
-    window: int = Field(..., description="Window in days (number of return points used)")
+    window: int = Field(
+        ..., description="Window in days (number of return points used)"
+    )
     as_of: Date
     n_points: int
-    correlation: Optional[float] = Field(None, description="Pearson correlation of aligned daily returns")
+    correlation: Optional[float] = Field(
+        None, description="Pearson correlation of aligned daily returns"
+    )
     start_date: Optional[Date] = None
     end_date: Optional[Date] = None
     note: Optional[str] = None
@@ -84,16 +89,24 @@ def correlation(
     asset1: str = Query(..., description="First asset symbol (e.g., BTC)"),
     asset2: str = Query(..., description="Second asset symbol (e.g., ETH)"),
     window: int = Query(30, ge=7, le=365, description="Window in days"),
-    as_of: Optional[Date] = Query(None, description="Reference date (YYYY-MM-DD). Defaults to latest common date."),
+    as_of: Optional[Date] = Query(
+        None, description="Reference date (YYYY-MM-DD). Defaults to latest common date."
+    ),
     db: Session = Depends(get_db),
 ) -> CorrelationOut:
     a1 = asset1.upper()
     a2 = asset2.upper()
     if a1 == a2:
-        raise HTTPException(status_code=422, detail="asset1 must be different from asset2")
+        raise HTTPException(
+            status_code=422, detail="asset1 must be different from asset2"
+        )
 
-    asset_obj1 = db.execute(select(Asset).where(Asset.symbol == a1)).scalar_one_or_none()
-    asset_obj2 = db.execute(select(Asset).where(Asset.symbol == a2)).scalar_one_or_none()
+    asset_obj1 = db.execute(
+        select(Asset).where(Asset.symbol == a1)
+    ).scalar_one_or_none()
+    asset_obj2 = db.execute(
+        select(Asset).where(Asset.symbol == a2)
+    ).scalar_one_or_none()
     if asset_obj1 is None:
         raise HTTPException(status_code=404, detail=f"Asset not found: {a1}")
     if asset_obj2 is None:
@@ -101,12 +114,21 @@ def correlation(
 
     # choose latest common date if as_of not provided
     if as_of is None:
-        max1 = db.execute(select(func.max(Price.date)).where(Price.asset_id == asset_obj1.id)).scalar_one()
-        max2 = db.execute(select(func.max(Price.date)).where(Price.asset_id == asset_obj2.id)).scalar_one()
+        max1 = db.execute(
+            select(func.max(Price.date)).where(Price.asset_id == asset_obj1.id)
+        ).scalar_one()
+        max2 = db.execute(
+            select(func.max(Price.date)).where(Price.asset_id == asset_obj2.id)
+        ).scalar_one()
         if max1 is None or max2 is None:
             return CorrelationOut(
-                asset1=a1, asset2=a2, window=window, as_of=Date.today(),
-                n_points=0, correlation=None, note="No price data available for one or both assets."
+                asset1=a1,
+                asset2=a2,
+                window=window,
+                as_of=Date.today(),
+                n_points=0,
+                correlation=None,
+                note="No price data available for one or both assets.",
             )
         as_of = min(max1, max2)
 

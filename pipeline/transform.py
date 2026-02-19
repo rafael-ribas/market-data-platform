@@ -17,9 +17,11 @@ ASSET_METRICS_T = AssetMetric.__table__
 def compute_metrics(window: int = 30) -> int:
     session = SessionLocal()
 
-    prices = session.execute(
-        select(Price).order_by(Price.asset_id, Price.date)
-    ).scalars().all()
+    prices = (
+        session.execute(select(Price).order_by(Price.asset_id, Price.date))
+        .scalars()
+        .all()
+    )
 
     session.close()
 

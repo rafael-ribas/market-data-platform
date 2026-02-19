@@ -20,7 +20,9 @@ def _read_df(query: str) -> pd.DataFrame:
         return pd.read_sql(text(query), conn)
 
 
-def export_rankings(as_of_date: Optional[str] = None) -> Tuple[pd.DataFrame, pd.DataFrame]:
+def export_rankings(
+    as_of_date: Optional[str] = None,
+) -> Tuple[pd.DataFrame, pd.DataFrame]:
     """Exports 30d cumulative return ranking and 30d volatility ranking for the latest (or given) date."""
     if as_of_date is None:
         as_of_date = _read_df("select max(date) as d from asset_metrics")["d"].iloc[0]

@@ -69,6 +69,7 @@ def _save_cache(path: Path, payload: dict) -> None:
 
 # --- helpers ----------------------------------------------------------------
 
+
 def _is_valid_symbol(symbol: str) -> bool:
     """
     Accept only standard crypto symbols:
@@ -80,7 +81,9 @@ def _is_valid_symbol(symbol: str) -> bool:
     return bool(re.fullmatch(r"[A-Z0-9]{2,10}", symbol))
 
 
-def _get_json(url: str, params: Optional[dict] = None, timeout: int = 20, retries: int = 6) -> dict:
+def _get_json(
+    url: str, params: Optional[dict] = None, timeout: int = 20, retries: int = 6
+) -> dict:
     """
     GET JSON with robust retry/backoff.
     - Respects Retry-After on 429
@@ -100,14 +103,18 @@ def _get_json(url: str, params: Optional[dict] = None, timeout: int = 20, retrie
                 if retry_after is not None and retry_after.isdigit():
                     wait = int(retry_after)
                 else:
-                    wait = min(60, int((2 ** attempt) + random.random()))
-                logger.warning(f"HTTP 429 (rate limit). Retry {attempt}/{retries} in {wait}s")
+                    wait = min(60, int((2**attempt) + random.random()))
+                logger.warning(
+                    f"HTTP 429 (rate limit). Retry {attempt}/{retries} in {wait}s"
+                )
                 time.sleep(wait)
                 continue
 
             if resp.status_code in (500, 502, 503, 504):
-                wait = min(60, int((2 ** attempt) + random.random()))
-                logger.warning(f"HTTP {resp.status_code}. Retry {attempt}/{retries} in {wait}s")
+                wait = min(60, int((2**attempt) + random.random()))
+                logger.warning(
+                    f"HTTP {resp.status_code}. Retry {attempt}/{retries} in {wait}s"
+                )
                 time.sleep(wait)
                 continue
 
@@ -115,11 +122,13 @@ def _get_json(url: str, params: Optional[dict] = None, timeout: int = 20, retrie
 
         except Exception as e:
             last_err = e
-            wait = min(60, int((2 ** attempt) + random.random()))
+            wait = min(60, int((2**attempt) + random.random()))
             logger.warning(f"Request error: {e}. Retry {attempt}/{retries} in {wait}s")
             time.sleep(wait)
 
-    raise RuntimeError(f"Failed to GET {url} after {retries} retries. Last error: {last_err}")
+    raise RuntimeError(
+        f"Failed to GET {url} after {retries} retries. Last error: {last_err}"
+    )
 
 
 def _ms_to_utc_date(ms: int) -> str:
@@ -147,6 +156,7 @@ def fetch_stablecoin_ids() -> set:
 
 
 # --- public API -------------------------------------------------------------
+
 
 def fetch_top_assets(limit: int = 20, vs_currency: str = "usd") -> List[dict]:
     """
@@ -250,11 +260,13 @@ def extract_top_assets_with_history(
     for asset in assets_raw:
         coin_id = asset["id"]
         symbol = asset["symbol"]  # already upper
-        name = asset["name"]
+        #name = asset["name"]
 
         # (double safety) ensure symbol ok
         if not _is_valid_symbol(symbol):
-            logger.info(f"Skipping invalid symbol at history stage: {symbol} ({coin_id})")
+            logger.info(
+                f"Skipping invalid symbol at history stage: {symbol} ({coin_id})"
+            )
             continue
 
         processed += 1
@@ -265,14 +277,24 @@ def extract_top_assets_with_history(
             logger.info(f"[{processed}/{limit}] Using cache for {symbol} ({coin_id})")
             chart = _load_cache(cache_file)
         else:
-            logger.info(f"[{processed}/{limit}] Fetching {days}d history for {symbol} ({coin_id})...")
-            chart = fetch_market_chart(coin_id=coin_id, days=days, vs_currency=vs_currency)
+            logger.info(
+                f"[{processed}/{limit}] Fetching {days}d history for {symbol} ({coin_id})..."
+            )
+            chart = fetch_market_chart(
+                coin_id=coin_id, days=days, vs_currency=vs_currency
+            )
             if use_cache:
                 _save_cache(cache_file, chart)
 
-        prices_by_date = {_ms_to_utc_date(ts): val for ts, val in chart.get("prices", [])}
-        mcap_by_date = {_ms_to_utc_date(ts): val for ts, val in chart.get("market_caps", [])}
-        vol_by_date = {_ms_to_utc_date(ts): val for ts, val in chart.get("total_volumes", [])}
+        prices_by_date = {
+            _ms_to_utc_date(ts): val for ts, val in chart.get("prices", [])
+        }
+        mcap_by_date = {
+            _ms_to_utc_date(ts): val for ts, val in chart.get("market_caps", [])
+        }
+        vol_by_date = {
+            _ms_to_utc_date(ts): val for ts, val in chart.get("total_volumes", [])
+        }
 
         dates = sorted(set(prices_by_date) | set(mcap_by_date) | set(vol_by_date))
 
@@ -285,7 +307,9 @@ def extract_top_assets_with_history(
                     "symbol": symbol,
                     "date": d,
                     "price": float(prices_by_date.get(d)),
-                    "market_cap": float(mcap_by_date.get(d)) if d in mcap_by_date else None,
+                    "market_cap": float(mcap_by_date.get(d))
+                    if d in mcap_by_date
+                    else None,
                     "volume": float(vol_by_date.get(d)) if d in vol_by_date else None,
                 }
             )
@@ -306,7 +330,10 @@ def extract_top_assets_with_history(
 
         time.sleep(throttle_seconds)
 
-    assets_out = [{"symbol": a["symbol"], "name": a["name"], "source": a["source"]} for a in assets_raw]
+    assets_out = [
+        {"symbol": a["symbol"], "name": a["name"], "source": a["source"]}
+        for a in assets_raw
+    ]
 
     logger.info(f"Done. assets={len(assets_out)} price_rows={len(all_prices)}")
     logger.info(f"Progress saved in: {STATE_FILE.as_posix()}")

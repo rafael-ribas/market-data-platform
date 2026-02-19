@@ -2,7 +2,6 @@ import os
 from datetime import date, timedelta
 import pytest
 from fastapi.testclient import TestClient
-
 from pathlib import Path
 import sys
 
@@ -14,7 +13,6 @@ sys.path.insert(0, str(ROOT))
 from db.base import Base
 from db.session import engine, SessionLocal
 from db.models import Asset, Price, AssetMetric
-import pytest
 from sqlalchemy.orm import Session
 from app.main import app
 

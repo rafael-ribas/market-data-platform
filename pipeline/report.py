@@ -10,7 +10,13 @@ from jinja2 import Environment, FileSystemLoader
 
 from reportlab.lib.pagesizes import A4
 from reportlab.platypus import (
-    SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, Image as RLImage, PageBreak
+    SimpleDocTemplate,
+    Paragraph,
+    Spacer,
+    Table,
+    TableStyle,
+    Image as RLImage,
+    PageBreak,
 )
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib import colors
@@ -24,7 +30,7 @@ REPORT_DIR = BASE_DIR / "reports"
 
 def _fmt_pct(x: float) -> str:
     try:
-        return f"{x*100:.2f}%"
+        return f"{x * 100:.2f}%"
     except Exception:
         return "N/A"
 
@@ -40,7 +46,9 @@ def _df_to_table_data(df: pd.DataFrame, max_rows: int = 15) -> list:
     return [list(df2.columns)] + df2.values.tolist()
 
 
-def _compute_insights(df_ret: pd.DataFrame, df_vol: pd.DataFrame, corr: pd.DataFrame) -> Dict[str, Any]:
+def _compute_insights(
+    df_ret: pd.DataFrame, df_vol: pd.DataFrame, corr: pd.DataFrame
+) -> Dict[str, Any]:
     # Expected columns:
     # df_ret: symbol, cumulative_return_30d
     # df_vol: symbol, volatility_30d
@@ -51,21 +59,27 @@ def _compute_insights(df_ret: pd.DataFrame, df_vol: pd.DataFrame, corr: pd.DataF
 
     if "cumulative_return_30d" in df_ret2.columns:
         df_ret2 = df_ret2.sort_values("cumulative_return_30d", ascending=False)
-        out["top_returns"] = df_ret2.head(5)[["symbol", "cumulative_return_30d"]].rename(
-            columns={"cumulative_return_30d": "value"}
-        ).to_dict("records")
-        out["bottom_returns"] = df_ret2.tail(5)[["symbol", "cumulative_return_30d"]].rename(
-            columns={"cumulative_return_30d": "value"}
-        ).to_dict("records")
+        out["top_returns"] = (
+            df_ret2.head(5)[["symbol", "cumulative_return_30d"]]
+            .rename(columns={"cumulative_return_30d": "value"})
+            .to_dict("records")
+        )
+        out["bottom_returns"] = (
+            df_ret2.tail(5)[["symbol", "cumulative_return_30d"]]
+            .rename(columns={"cumulative_return_30d": "value"})
+            .to_dict("records")
+        )
     else:
         out["top_returns"] = []
         out["bottom_returns"] = []
 
     if "volatility_30d" in df_vol2.columns:
         df_vol2 = df_vol2.sort_values("volatility_30d", ascending=False)
-        out["top_vol"] = df_vol2.head(5)[["symbol", "volatility_30d"]].rename(
-            columns={"volatility_30d": "value"}
-        ).to_dict("records")
+        out["top_vol"] = (
+            df_vol2.head(5)[["symbol", "volatility_30d"]]
+            .rename(columns={"volatility_30d": "value"})
+            .to_dict("records")
+        )
     else:
         out["top_vol"] = []
 
@@ -92,13 +106,19 @@ def _compute_insights(df_ret: pd.DataFrame, df_vol: pd.DataFrame, corr: pd.DataF
 
         pairs_sorted = sorted(pairs, key=lambda x: x[2], reverse=True)
         top_corr = [{"a": a, "b": b, "value": v} for a, b, v in pairs_sorted[:5]]
-        low_corr = [{"a": a, "b": b, "value": v} for a, b, v in sorted(pairs, key=lambda x: x[2])[:5]]
+        low_corr = [
+            {"a": a, "b": b, "value": v}
+            for a, b, v in sorted(pairs, key=lambda x: x[2])[:5]
+        ]
 
         # Outlier: lowest average correlation (excluding nan)
         avg = c.mean(axis=1, skipna=True)
         if not avg.empty:
             sym = avg.idxmin()
-            outlier = {"symbol": sym, "avg_corr": float(avg.loc[sym]) if pd.notna(avg.loc[sym]) else None}
+            outlier = {
+                "symbol": sym,
+                "avg_corr": float(avg.loc[sym]) if pd.notna(avg.loc[sym]) else None,
+            }
 
     out["top_corr"] = top_corr
     out["low_corr"] = low_corr
@@ -107,7 +127,9 @@ def _compute_insights(df_ret: pd.DataFrame, df_vol: pd.DataFrame, corr: pd.DataF
     return out
 
 
-def generate_html_report(df_returns: pd.DataFrame, df_vol: pd.DataFrame, insights: Dict[str, Any]) -> Path:
+def generate_html_report(
+    df_returns: pd.DataFrame, df_vol: pd.DataFrame, insights: Dict[str, Any]
+) -> Path:
     REPORT_DIR.mkdir(exist_ok=True)
 
     env = Environment(loader=FileSystemLoader(TEMPLATE_DIR))
@@ -124,13 +146,31 @@ def generate_html_report(df_returns: pd.DataFrame, df_vol: pd.DataFrame, insight
         generated_at=datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC"),
         returns_table=df_returns.to_html(index=False, float_format="%.6f"),
         volatility_table=df_vol.to_html(index=False, float_format="%.6f"),
-        top_corr_pairs_table=(df_pairs.to_html(index=False, float_format="%.4f") if not df_pairs.empty else "<p class='muted'>N/A</p>"),
-
-        correlation_image=(rel_from_reports(DATA_DIR / "correlation_heatmap.png") if (DATA_DIR / "correlation_heatmap.png").exists() else None),
-        top10_price_image=(rel_from_reports(DATA_DIR / "top10_price_normalized.png") if (DATA_DIR / "top10_price_normalized.png").exists() else None),
-        risk_return_image=(rel_from_reports(DATA_DIR / "risk_return_scatter.png") if (DATA_DIR / "risk_return_scatter.png").exists() else None),
-        drawdown_btc_image=(rel_from_reports(DATA_DIR / "drawdown_BTC.png") if (DATA_DIR / "drawdown_BTC.png").exists() else None),
-
+        top_corr_pairs_table=(
+            df_pairs.to_html(index=False, float_format="%.4f")
+            if not df_pairs.empty
+            else "<p class='muted'>N/A</p>"
+        ),
+        correlation_image=(
+            rel_from_reports(DATA_DIR / "correlation_heatmap.png")
+            if (DATA_DIR / "correlation_heatmap.png").exists()
+            else None
+        ),
+        top10_price_image=(
+            rel_from_reports(DATA_DIR / "top10_price_normalized.png")
+            if (DATA_DIR / "top10_price_normalized.png").exists()
+            else None
+        ),
+        risk_return_image=(
+            rel_from_reports(DATA_DIR / "risk_return_scatter.png")
+            if (DATA_DIR / "risk_return_scatter.png").exists()
+            else None
+        ),
+        drawdown_btc_image=(
+            rel_from_reports(DATA_DIR / "drawdown_BTC.png")
+            if (DATA_DIR / "drawdown_BTC.png").exists()
+            else None
+        ),
         insights=insights,
     )
 
@@ -150,9 +190,16 @@ def generate_pdf_report(
     styles = getSampleStyleSheet()
     story = []
 
-    story.append(Paragraph("Market Data Platform — Crypto Analytics Report", styles["Title"]))
+    story.append(
+        Paragraph("Market Data Platform — Crypto Analytics Report", styles["Title"])
+    )
     story.append(Spacer(1, 8))
-    story.append(Paragraph(f"Generated at: {datetime.utcnow().strftime('%Y-%m-%d %H:%M UTC')}", styles["Normal"]))
+    story.append(
+        Paragraph(
+            f"Generated at: {datetime.utcnow().strftime('%Y-%m-%d %H:%M UTC')}",
+            styles["Normal"],
+        )
+    )
     story.append(Spacer(1, 14))
 
     # Insights
@@ -162,9 +209,33 @@ def generate_pdf_report(
     def bullet(txt: str) -> Paragraph:
         return Paragraph(f"• {txt}", styles["Normal"])
 
-    top_ret = ", ".join([f"{x['symbol']} ({_fmt_pct(x['value'])})" for x in insights.get("top_returns", [])]) or "N/A"
-    bottom_ret = ", ".join([f"{x['symbol']} ({_fmt_pct(x['value'])})" for x in insights.get("bottom_returns", [])]) or "N/A"
-    top_vol = ", ".join([f"{x['symbol']} ({_fmt_pct(x['value'])})" for x in insights.get("top_vol", [])]) or "N/A"
+    top_ret = (
+        ", ".join(
+            [
+                f"{x['symbol']} ({_fmt_pct(x['value'])})"
+                for x in insights.get("top_returns", [])
+            ]
+        )
+        or "N/A"
+    )
+    bottom_ret = (
+        ", ".join(
+            [
+                f"{x['symbol']} ({_fmt_pct(x['value'])})"
+                for x in insights.get("bottom_returns", [])
+            ]
+        )
+        or "N/A"
+    )
+    top_vol = (
+        ", ".join(
+            [
+                f"{x['symbol']} ({_fmt_pct(x['value'])})"
+                for x in insights.get("top_vol", [])
+            ]
+        )
+        or "N/A"
+    )
 
     story.append(bullet(f"Top 5 cumulative returns (30d): {top_ret}"))
     story.append(Spacer(1, 3))
@@ -173,8 +244,24 @@ def generate_pdf_report(
     story.append(bullet(f"Top 5 volatility (30d): {top_vol}"))
     story.append(Spacer(1, 8))
 
-    top_pairs = ", ".join([f"{p['a']}–{p['b']} ({p['value']:.2f})" for p in insights.get("top_corr", [])]) or "N/A"
-    low_pairs = ", ".join([f"{p['a']}–{p['b']} ({p['value']:.2f})" for p in insights.get("low_corr", [])]) or "N/A"
+    top_pairs = (
+        ", ".join(
+            [
+                f"{p['a']}–{p['b']} ({p['value']:.2f})"
+                for p in insights.get("top_corr", [])
+            ]
+        )
+        or "N/A"
+    )
+    low_pairs = (
+        ", ".join(
+            [
+                f"{p['a']}–{p['b']} ({p['value']:.2f})"
+                for p in insights.get("low_corr", [])
+            ]
+        )
+        or "N/A"
+    )
     story.append(bullet(f"Most correlated daily-return pairs: {top_pairs}"))
     story.append(Spacer(1, 3))
     story.append(bullet(f"Least correlated daily-return pairs: {low_pairs}"))
@@ -183,14 +270,25 @@ def generate_pdf_report(
     out = insights.get("outlier") or {}
     if out.get("symbol"):
         if out.get("avg_corr") is not None:
-            story.append(bullet(f"Outlier (lowest average correlation): {out['symbol']} (avg corr {out['avg_corr']:.2f})"))
+            story.append(
+                bullet(
+                    f"Outlier (lowest average correlation): {out['symbol']} (avg corr {out['avg_corr']:.2f})"
+                )
+            )
         else:
-            story.append(bullet(f"Outlier (lowest average correlation): {out['symbol']}"))
+            story.append(
+                bullet(f"Outlier (lowest average correlation): {out['symbol']}")
+            )
     story.append(PageBreak())
 
     # Charts pages
     chart_specs = [
-        ("Top 10 Price Performance (Normalized)", DATA_DIR / "top10_price_normalized.png", 520, 320),
+        (
+            "Top 10 Price Performance (Normalized)",
+            DATA_DIR / "top10_price_normalized.png",
+            520,
+            320,
+        ),
         ("Risk vs Return (30d)", DATA_DIR / "risk_return_scatter.png", 520, 320),
         ("BTC Drawdown (60d)", DATA_DIR / "drawdown_BTC.png", 520, 320),
         ("Correlation — Daily Returns", DATA_DIR / "correlation_heatmap.png", 520, 400),
@@ -209,39 +307,66 @@ def generate_pdf_report(
     story.append(PageBreak())
 
     # Tables
-    story.append(Paragraph("30-Day Cumulative Returns Ranking (Top 15)", styles["Heading2"]))
+    story.append(
+        Paragraph("30-Day Cumulative Returns Ranking (Top 15)", styles["Heading2"])
+    )
     story.append(Spacer(1, 8))
-    t1 = Table(_df_to_table_data(df_returns.sort_values("cumulative_return_30d", ascending=False), max_rows=15))
-    t1.setStyle(TableStyle([
-        ("BACKGROUND", (0, 0), (-1, 0), colors.black),
-        ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
-        ("GRID", (0, 0), (-1, -1), 0.25, colors.grey),
-        ("FONTSIZE", (0, 0), (-1, -1), 8),
-        ("ALIGN", (1, 1), (-1, -1), "RIGHT"),
-        ("ALIGN", (0, 0), (0, -1), "LEFT"),
-    ]))
+    t1 = Table(
+        _df_to_table_data(
+            df_returns.sort_values("cumulative_return_30d", ascending=False),
+            max_rows=15,
+        )
+    )
+    t1.setStyle(
+        TableStyle(
+            [
+                ("BACKGROUND", (0, 0), (-1, 0), colors.black),
+                ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+                ("GRID", (0, 0), (-1, -1), 0.25, colors.grey),
+                ("FONTSIZE", (0, 0), (-1, -1), 8),
+                ("ALIGN", (1, 1), (-1, -1), "RIGHT"),
+                ("ALIGN", (0, 0), (0, -1), "LEFT"),
+            ]
+        )
+    )
     story.append(t1)
     story.append(Spacer(1, 16))
 
     story.append(Paragraph("30-Day Volatility Ranking (Top 15)", styles["Heading2"]))
     story.append(Spacer(1, 8))
-    t2 = Table(_df_to_table_data(df_vol.sort_values("volatility_30d", ascending=False), max_rows=15))
-    t2.setStyle(TableStyle([
-        ("BACKGROUND", (0, 0), (-1, 0), colors.black),
-        ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
-        ("GRID", (0, 0), (-1, -1), 0.25, colors.grey),
-        ("FONTSIZE", (0, 0), (-1, -1), 8),
-        ("ALIGN", (1, 1), (-1, -1), "RIGHT"),
-        ("ALIGN", (0, 0), (0, -1), "LEFT"),
-    ]))
+    t2 = Table(
+        _df_to_table_data(
+            df_vol.sort_values("volatility_30d", ascending=False), max_rows=15
+        )
+    )
+    t2.setStyle(
+        TableStyle(
+            [
+                ("BACKGROUND", (0, 0), (-1, 0), colors.black),
+                ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+                ("GRID", (0, 0), (-1, -1), 0.25, colors.grey),
+                ("FONTSIZE", (0, 0), (-1, -1), 8),
+                ("ALIGN", (1, 1), (-1, -1), "RIGHT"),
+                ("ALIGN", (0, 0), (0, -1), "LEFT"),
+            ]
+        )
+    )
     story.append(t2)
 
     story.append(Spacer(1, 18))
-    story.append(Paragraph("Data Source: CoinGecko API | Engineered by Rafael Ribas", styles["Normal"]))
+    story.append(
+        Paragraph(
+            "Data Source: CoinGecko API | Engineered by Rafael Ribas", styles["Normal"]
+        )
+    )
 
     doc = SimpleDocTemplate(
-        str(pdf_path), pagesize=A4,
-        rightMargin=32, leftMargin=32, topMargin=32, bottomMargin=32
+        str(pdf_path),
+        pagesize=A4,
+        rightMargin=32,
+        leftMargin=32,
+        topMargin=32,
+        bottomMargin=32,
     )
     doc.build(story)
     return pdf_path

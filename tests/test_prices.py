@@ -8,6 +8,7 @@ def test_prices_symbol(client):
     assert "price" in data[0]
     assert "date" in data[0]
 
+
 def test_prices_symbol_range(client):
     r = client.get("/prices/BTC?start=2025-01-02&end=2025-01-05")
     assert r.status_code == 200

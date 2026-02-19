@@ -6,6 +6,7 @@ and using explicit Pydantic response models.
 
 This module supports both Pydantic v1 and v2.
 """
+
 from typing import Iterator, List
 
 from fastapi import APIRouter, Depends, HTTPException, Query

@@ -4,6 +4,7 @@ Prices router (Python 3.9 + Pydantic v1 compatible)
 Endpoints:
 - GET /prices/{symbol}?start=YYYY-MM-DD&end=YYYY-MM-DD
 """
+
 from datetime import date as Date
 from typing import Iterator, List, Optional
 
@@ -42,7 +43,9 @@ def get_prices(
     symbol: str,
     start: Optional[Date] = Query(None, description="Start date (YYYY-MM-DD)"),
     end: Optional[Date] = Query(None, description="End date (YYYY-MM-DD)"),
-    limit: int = Query(400, ge=1, le=2000, description="Max rows returned (safety cap)"),
+    limit: int = Query(
+        400, ge=1, le=2000, description="Max rows returned (safety cap)"
+    ),
     db: Session = Depends(get_db),
 ) -> List[PriceOut]:
     sym = symbol.upper()
@@ -53,7 +56,9 @@ def get_prices(
 
     # Default window: last 30 days available in DB for this asset
     if start is None or end is None:
-        max_date = db.execute(select(func.max(Price.date)).where(Price.asset_id == asset.id)).scalar_one()
+        max_date = db.execute(
+            select(func.max(Price.date)).where(Price.asset_id == asset.id)
+        ).scalar_one()
         if max_date is None:
             return []
         if end is None:
@@ -75,7 +80,7 @@ def get_prices(
 
     rows = db.execute(q).all()
     out: List[PriceOut] = []
-    for (d, p, mc, vol) in rows:
+    for d, p, mc, vol in rows:
         out.append(
             PriceOut(
                 symbol=asset.symbol,

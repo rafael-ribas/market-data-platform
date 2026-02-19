@@ -40,6 +40,7 @@ def upsert_assets(conn, assets: List[dict]) -> int:
     rows = conn.execute(stmt).fetchall()
     return len(rows)
 
+
 def fetch_asset_ids(conn, symbols: List[str]) -> Dict[str, int]:
     """
     Returns {symbol: id} for given symbols
@@ -52,7 +53,9 @@ def fetch_asset_ids(conn, symbols: List[str]) -> Dict[str, int]:
     return {r.symbol: r.id for r in rows}
 
 
-def _normalize_price_rows(prices: List[dict], symbol_to_id: Dict[str, int]) -> List[dict]:
+def _normalize_price_rows(
+    prices: List[dict], symbol_to_id: Dict[str, int]
+) -> List[dict]:
     """
     prices: [{symbol, date(YYYY-MM-DD), price, market_cap, volume}]
     -> rows: [{asset_id, date(date obj), price, market_cap, volume}]
@@ -97,6 +100,7 @@ def upsert_prices(conn, price_rows: List[dict]) -> int:
 
     rows = conn.execute(stmt).fetchall()
     return len(rows)
+
 
 def load_assets_and_prices(
     assets: List[dict],

@@ -5,6 +5,7 @@ Endpoints:
 - GET /metrics/latest
 - GET /metrics/{symbol}?window=30
 """
+
 from datetime import date as Date
 from typing import Iterator, List, Optional
 
@@ -41,7 +42,10 @@ class MetricOut(BaseModel):
 @router.get("/latest", response_model=List[MetricOut])
 def latest_metrics(
     limit: int = Query(20, ge=1, le=250, description="Max number of assets to return"),
-    as_of: Optional[Date] = Query(None, description="Optional reference date (YYYY-MM-DD). Defaults to latest in DB."),
+    as_of: Optional[Date] = Query(
+        None,
+        description="Optional reference date (YYYY-MM-DD). Defaults to latest in DB.",
+    ),
     db: Session = Depends(get_db),
 ) -> List[MetricOut]:
     if as_of is None:
@@ -80,7 +84,9 @@ def latest_metrics(
 def metrics_by_symbol(
     symbol: str,
     window: int = Query(30, ge=7, le=365, description="Number of days to return"),
-    as_of: Optional[Date] = Query(None, description="Reference date (YYYY-MM-DD). Defaults to latest available."),
+    as_of: Optional[Date] = Query(
+        None, description="Reference date (YYYY-MM-DD). Defaults to latest available."
+    ),
     db: Session = Depends(get_db),
 ) -> List[MetricOut]:
     sym = symbol.upper()

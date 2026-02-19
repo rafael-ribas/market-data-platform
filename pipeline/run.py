@@ -21,17 +21,21 @@ def run_etl(limit: int, days: int, throttle: float, chunk_prices: int):
 
     with engine.begin() as conn:
         # create initial run record
-        stmt = insert(ETLRun).values(
-            started_at=started_at,
-            status="RUNNING",
-        ).returning(ETLRun.id)
+        stmt = (
+            insert(ETLRun)
+            .values(
+                started_at=started_at,
+                status="RUNNING",
+            )
+            .returning(ETLRun.id)
+        )
 
         run_id = conn.execute(stmt).scalar()
 
     try:
         assets, prices = extract_top_assets_with_history(
             limit=limit,
-            days=days+15,
+            days=days + 15,
             throttle_seconds=throttle,
             use_cache=True,
         )
@@ -55,23 +59,31 @@ def run_etl(limit: int, days: int, throttle: float, chunk_prices: int):
         finished_at = datetime.utcnow()
 
         with engine.begin() as conn:
-            stmt = update(ETLRun).where(ETLRun.id == run_id).values(
-                finished_at=finished_at,
-                assets_loaded=assets_loaded,
-                prices_loaded=prices_loaded,
-                status="SUCCESS",
+            stmt = (
+                update(ETLRun)
+                .where(ETLRun.id == run_id)
+                .values(
+                    finished_at=finished_at,
+                    assets_loaded=assets_loaded,
+                    prices_loaded=prices_loaded,
+                    status="SUCCESS",
+                )
             )
             conn.execute(stmt)
 
         logger.info(f"ETL SUCCESS run_id={run_id}")
 
-    except Exception as e:
+    except Exception:
         finished_at = datetime.utcnow()
 
         with engine.begin() as conn:
-            stmt = update(ETLRun).where(ETLRun.id == run_id).values(
-                finished_at=finished_at,
-                status="FAILED",
+            stmt = (
+                update(ETLRun)
+                .where(ETLRun.id == run_id)
+                .values(
+                    finished_at=finished_at,
+                    status="FAILED",
+                )
             )
             conn.execute(stmt)
 

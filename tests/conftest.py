@@ -16,6 +16,7 @@ from db.models import Asset, Price, AssetMetric
 from sqlalchemy.orm import Session
 from app.main import app
 
+
 @pytest.fixture(scope="session", autouse=True)
 def setup_db():
     # 2) cria as tabelas no SQLite em memória
@@ -37,8 +38,24 @@ def setup_db():
         start = date(2025, 1, 1)
         for i in range(10):
             d = start + timedelta(days=i)
-            db.add(Price(asset_id=btc.id, date=d, price=40000 + i * 100, market_cap=None, volume=None))
-            db.add(Price(asset_id=eth.id, date=d, price=2000 + i * 10, market_cap=None, volume=None))
+            db.add(
+                Price(
+                    asset_id=btc.id,
+                    date=d,
+                    price=40000 + i * 100,
+                    market_cap=None,
+                    volume=None,
+                )
+            )
+            db.add(
+                Price(
+                    asset_id=eth.id,
+                    date=d,
+                    price=2000 + i * 10,
+                    market_cap=None,
+                    volume=None,
+                )
+            )
 
             # métricas compatíveis com seus endpoints
             db.add(
@@ -65,6 +82,7 @@ def setup_db():
     finally:
         db.close()
 
+
 @pytest.fixture
 def db_session():
     """
@@ -82,4 +100,3 @@ def db_session():
 @pytest.fixture()
 def client():
     return TestClient(app)
-

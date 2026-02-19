@@ -260,7 +260,7 @@ def extract_top_assets_with_history(
     for asset in assets_raw:
         coin_id = asset["id"]
         symbol = asset["symbol"]  # already upper
-        #name = asset["name"]
+        # name = asset["name"]
 
         # (double safety) ensure symbol ok
         if not _is_valid_symbol(symbol):

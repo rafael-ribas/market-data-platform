@@ -1,11 +1,15 @@
 import os
 from datetime import date, timedelta
-
 import pytest
 from fastapi.testclient import TestClient
 
-# 1) IMPORTANTÍSSIMO: setar antes de importar db.session/app.main
+from pathlib import Path
+import sys
+
 os.environ["DATABASE_URL"] = "sqlite+pysqlite:///:memory:"
+
+ROOT = Path(__file__).resolve().parents[1]  # pasta raiz do repo
+sys.path.insert(0, str(ROOT))
 
 from db.base import Base
 from db.session import engine, SessionLocal
@@ -13,7 +17,6 @@ from db.models import Asset, Price, AssetMetric
 import pytest
 from sqlalchemy.orm import Session
 from app.main import app
-
 
 @pytest.fixture(scope="session", autouse=True)
 def setup_db():

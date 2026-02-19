@@ -284,6 +284,19 @@ To list available fixtures:
 
 `pytest --fixtures -q`
 
+## 📊 Test Coverage
+
+The project maintains high automated test coverage.
+
+Current coverage: **91%**
+
+To run locally:
+
+`pytest --cov=app --cov-report=term-missing`
+
+![Coverage Report](docs/coverage.png)
+
+
 ## 🏗 Test Architecture
 
 Tests are organized under the `tests/` directory and follow an integration-first approach.
@@ -341,7 +354,7 @@ The schema is automatically created at test startup.
 | Analytics Engine | ✅ |
 | Automated Reporting | ✅ |
 | FastAPI API Layer | ✅ |
-| Unit Tests (pytest) | 🔜 |
+| Unit Tests (pytest) | ✅ |
 | CI/CD | 🔜 |
 | Dockerized API Service | 🔜 |
 | Cloud Deployment | 🔜 |

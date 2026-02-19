@@ -11,6 +11,8 @@
 ![FastAPI](https://img.shields.io/badge/FastAPI-API-green)
 [![CI](https://github.com/rafael-ribas/market-data-platform/actions/workflows/ci.yml/badge.svg)](https://github.com/rafael-ribas/market-data-platform/actions/workflows/ci.yml)
 ![Coverage](https://img.shields.io/badge/coverage-91%25-brightgreen)
+[![codecov](https://codecov.io/gh/rafael-ribas/market-data-platform/branch/main/graph/badge.svg)](https://codecov.io/gh/rafael-ribas/market-data-platform)
+
 
 
 A production-style **Data Engineering project** that implements a

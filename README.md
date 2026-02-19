@@ -9,6 +9,9 @@
 ![Analytics](https://img.shields.io/badge/Layer-Analytics-purple)
 ![Reporting](https://img.shields.io/badge/Output-HTML%20%7C%20PDF-red)
 ![FastAPI](https://img.shields.io/badge/FastAPI-API-green)
+[![CI](https://github.com/rafael-ribas/market-data-platform/actions/workflows/ci.yml/badge.svg)](https://github.com/rafael-ribas/market-data-platform/actions/workflows/ci.yml)
+![Coverage](https://img.shields.io/badge/coverage-91%25-brightgreen)
+
 
 A production-style **Data Engineering project** that implements a
 complete financial market data pipeline.
@@ -25,6 +28,8 @@ correlation), and automatically generates HTML and PDF research reports.
 -   [Tech Stack](#-tech-stack)
 -   [Data Pipeline Flow](#-data-pipeline-flow)
 -   [REST API (FastAPI)](#-rest-api-fastapi)
+-   [Docker Deployment](#-docker-deployment)
+-   [CI Pipeline](#-ci-pipeline)
 -   [Analytics Layer](#-analytics-layer)
 -   [Automated Reporting](#-automated-reporting)
 -   [Business Impact](#-business-impact)
@@ -44,27 +49,32 @@ Pipeline structure:
 
 Core components:
 
--   Dockerized PostgreSQL database
--   Schema versioning with Alembic
--   Idempotent upserts (`ON CONFLICT`)
--   ETL run tracking (`etl_runs`)
--   Data quality validations
--   Analytics computation layer
--   Automated HTML + PDF report generation
+- Dockerized PostgreSQL database
+- Schema versioning with Alembic
+- Idempotent upserts (`ON CONFLICT`)
+- ETL run tracking (`etl_runs`)
+- Data quality validations
+- Analytics computation layer
+- Automated HTML + PDF report generation
+- Production-ready containerized API
 
 ------------------------------------------------------------------------
 
 # 🛠 Tech Stack
 
--   Python 3.9+
--   PostgreSQL 16
--   SQLAlchemy (Core + ORM)
--   Alembic (Migrations)
--   Docker & Docker Compose
--   Pandas / NumPy (Analytics)
--   Jinja2 (HTML templating)
--   Matplotlib (Charts)
--   WeasyPrint (PDF rendering)
+- Python 3.9+
+- PostgreSQL 16
+- SQLAlchemy (Core + ORM)
+- Psycopg (PostgreSQL driver v3)
+- Alembic (Migrations)
+- Docker & Docker Compose
+- Pandas / NumPy (Analytics)
+- Jinja2 (HTML templating)
+- Matplotlib (Charts)
+- ReportLab (PDF rendering)
+- FastAPI
+- Ruff (Linting)
+- Pytest (Testing)
 
 ------------------------------------------------------------------------
 
@@ -72,26 +82,26 @@ Core components:
 
 ## 1 - Extract
 
--   Fetch Top N non-stable assets
--   Historical price data ingestion
--   Rate limit handling
--   Resume capability
--   Local caching
+- Fetch Top N non-stable assets
+- Historical price data ingestion
+- Rate limit handling
+- Resume capability
+- Local caching
 
 ## 2️ - Transform
 
--   Daily returns
--   30-day cumulative return
--   30-day rolling volatility
--   Correlation matrix
+- Daily returns
+- 30-day cumulative return
+- 30-day rolling volatility
+- Correlation matrix
 
 ## 3️ - Load
 
--   Idempotent upsert into:
-    -   `assets`
-    -   `prices`
-    -   `asset_metrics`
--   Execution logging in `etl_runs`
+- Idempotent upsert into:
+  -   `assets`
+  -   `prices`
+  -   `asset_metrics`
+- Execution logging in `etl_runs`
 
 ------------------------------------------------------------------------
 
@@ -145,6 +155,72 @@ Returns:
 - Reference date (`as_of`)
 
 `GET /correlation?asset1=BTC&asset2=ETH&window=60`
+
+------------------------------------------------------------------------
+
+# 🐳 Docker Deployment
+
+The application is fully containerized and can be started using Docker Compose.
+
+## ▶ Start Full Stack (API + PostgreSQL)
+
+```bash
+docker compose up --build
+```
+
+Services included:
+
+- PostgreSQL 16 (containerized)
+- FastAPI application (Dockerized)
+- Automatic Alembic migrations on startup
+- Health checks enabled
+
+API will be available at:
+
+```
+http://localhost:8000/docs
+```
+
+## ▶ Run ETL inside Docker
+
+To populate the database:
+
+```bash
+docker compose --profile jobs run --rm ingest
+```
+
+This executes the ingestion command:
+
+```bash
+python -m pipeline.run --limit 20 --days 45
+```
+
+## Containerized Architecture
+
+- API container
+- PostgreSQL container
+- Dedicated ETL ingest job container (Compose profile)
+- Environment-based configuration via `DATABASE_URL`
+- psycopg (PostgreSQL driver v3)
+- Automatic schema migrations
+
+This setup mirrors a production-ready service architecture.
+
+------------------------------------------------------------------------
+
+# ⚙️ CI Pipeline
+
+This project includes automated `Continuous Integration` via `GitHub Actions`.
+
+On every push or pull request:
+
+- Ruff lint validation
+- Format validation
+- Automated tests (pytest)
+- Database migrations validation
+- Docker image build verification
+
+This ensures code quality, schema integrity, and container build stability.
 
 ------------------------------------------------------------------------
 
@@ -252,7 +328,7 @@ deliverables.
 
 `uvicorn app.main:app --reload`
 	
-### 7 - Access 
+### 7 - Access API Docs
 	
 `http://localhost:8000/docs`
 
@@ -288,13 +364,18 @@ To list available fixtures:
 
 The project maintains high automated test coverage.
 
-Current coverage: **91%**
+Current coverage: **~90%+**
 
 To run locally:
 
 `pytest --cov=app --cov-report=term-missing`
 
 ![Coverage Report](docs/coverage.png)
+
+Tests use:
+
+- FastAPI TestClient
+- SQLite Test Database
 
 
 ## 🏗 Test Architecture
@@ -355,8 +436,8 @@ The schema is automatically created at test startup.
 | Automated Reporting | ✅ |
 | FastAPI API Layer | ✅ |
 | Unit Tests (pytest) | ✅ |
-| CI/CD | 🔜 |
-| Dockerized API Service | 🔜 |
+| CI/CD | ✅ |
+| Dockerized API Service | ✅ |
 | Cloud Deployment | 🔜 |
 
 ------------------------------------------------------------------------
@@ -366,12 +447,14 @@ The schema is automatically created at test startup.
     market-data-platform/
     │
     ├── alembic/
-	├── app/
+    ├── app/
     ├── db/
     ├── pipeline/
     ├── reports/
     ├── templates/
+    ├── tests/
     ├── docker-compose.yml
+    ├── Dockerfile
     ├── README.md
     └── requirements.txt
 

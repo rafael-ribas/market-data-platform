@@ -1,15 +1,37 @@
-.venv/
-.env
+# cache / local db
+*.sqlite
+data/
+
+# Python
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.coverage
+htmlcov/
 
-# dados
+# Venv
+.venv/
+venv/
+
+# Local env / secrets
+.env
+
+# Git
+.git/
+.gitignore
+
+# Local data/cache
+*.sqlite
+data/
+reports/
 data/raw/
 data/state/
 reports/
 *.png
 *.csv
 
-# cache / local db
-*.sqlite
-data/
+# OS/IDE
+.vscode/
+.DS_Store

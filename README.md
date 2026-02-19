@@ -36,7 +36,7 @@ correlation), and automatically generates HTML and PDF research reports.
 -   [Business Impact](#-business-impact)
 -   [Quickstart](#-quickstart)
 -   [Testing](#-testing)
--   [Roadmap Status](#-roadmap-status)
+-   [Project Roadmap](#-project-roadmap)
 -   [Repository Structure](#-repository-structure)
 -   [Author](#-author)
 
